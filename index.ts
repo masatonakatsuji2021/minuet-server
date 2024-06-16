@@ -241,6 +241,10 @@ export class Core {
             moduleInit.name,
         ];
 
+        if (moduleInit.init.formalModuleName) {
+            fullModuleNames.push(moduleInit.init.formalModuleName);
+        }
+
         let module;
         for(let n=0; n < fullModuleNames.length ; n++){
             const fullModuleName : string = fullModuleNames[n];
@@ -254,7 +258,7 @@ export class Core {
                 module.onBegin();
                 break;
             }catch(err){
-                console.log(err);
+                // console.log(err);
             }               
         }
 
@@ -445,6 +449,8 @@ export class MinuetServerModuleBase {
      * @param req 
      * @param res 
      */
-    public onRequest(req : http.IncomingMessage, res : http.ServerResponse){}
+    public async onRequest(req : http.IncomingMessage, res : http.ServerResponse) :  Promise<boolean> {
+        return false;
+    }
 
 }

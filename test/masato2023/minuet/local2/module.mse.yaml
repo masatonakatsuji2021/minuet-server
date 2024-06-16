@@ -1,0 +1,18 @@
+# ---------------------------------------------------------------------------
+# Minuet Server Module
+# module : minuet-script-engine(mse)
+
+formalModuleName: minuet-script-engine
+
+# root directory
+rootDir: www
+
+# directory indexs
+directoryIndexs: 
+  - index.mse
+
+# response header
+headers:
+
+  # server name
+  server_name: minuet-server-mse

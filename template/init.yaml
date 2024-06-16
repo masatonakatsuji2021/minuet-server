@@ -14,3 +14,4 @@ loadBalancer:
 # Sector Paths
 sectorPaths:  
   local1: test/masato2023/minuet/local1
+  local2: test/masato2023/minuet/local2

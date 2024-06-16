@@ -29,11 +29,10 @@ class Listener extends minuet_load_balancer_1.LoadBalancerListner {
                 const modules = sector.modules;
                 for (let n2 = 0; n2 < modules.length; n2++) {
                     const module = modules[n2];
-                    yield module.onRequest(req, res);
+                    const status = yield module.onRequest(req, res);
+                    if (status)
+                        break;
                 }
-                res.write("...............OK!!");
-                res.write("\n sector = " + sector.name);
-                res.end();
             }
         });
     }

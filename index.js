@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MinuetServerModuleBase = exports.MinuetServer = exports.Core = void 0;
 const os = require("os");
@@ -202,6 +211,9 @@ class Core {
             "minuet-server-" + moduleInit.name,
             moduleInit.name,
         ];
+        if (moduleInit.init.formalModuleName) {
+            fullModuleNames.push(moduleInit.init.formalModuleName);
+        }
         let module;
         for (let n = 0; n < fullModuleNames.length; n++) {
             const fullModuleName = fullModuleNames[n];
@@ -216,7 +228,7 @@ class Core {
                 break;
             }
             catch (err) {
-                console.log(err);
+                // console.log(err);
             }
         }
         if (!module) {
@@ -306,8 +318,34 @@ class MinuetServer {
     }
 }
 exports.MinuetServer = MinuetServer;
+/**
+ * ***Minuet Server Module Base*** : Third parties use this class to create modules that succeed.
+ * The derived class name should be **MinuetServerModule{module name}**.
+ *
+ * Exp:  If your module name is ``m01``, put the following code in the ``index.ts`` file:.
+ *
+ * ```typescript
+ * export class MinuetServerModuleM01 extends MinuetServerModuleBase {
+ *      public onRequest(req, res) {
+ *          // listen code...
+ *      }
+ * }
+ * ```
+ */
 class MinuetServerModuleBase {
+    /**
+     * ***onBegin*** : For events after the module is instantiated.
+     */
     onBegin() { }
-    onRequest(req, res) { }
+    /**
+     * ***onRequest*** : Event when listening for a request.
+     * @param req
+     * @param res
+     */
+    onRequest(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return false;
+        });
+    }
 }
 exports.MinuetServerModuleBase = MinuetServerModuleBase;
