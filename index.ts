@@ -1,10 +1,8 @@
-import { exec, execSync } from "child_process";
 import * as os from "os";
 import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
-import { LoadBalancer, LoadBalancerOption, LoadBalancerType, LoadBalancerServerType, LoadBalancerMap } from "minuet-load-balancer";
-import { error } from "console";
+import { LoadBalancer, LoadBalancerOption, LoadBalancerType, LoadBalancerMap, LoadBalancerServer, LoadBalancerServerType } from "minuet-load-balancer";
 
 export class Core {
 
@@ -105,47 +103,40 @@ export class Core {
 
             let protocol;
             let url;
+            let defaultPort;
             if (sectorInit.type == MinuetServerListenType.http){
                 protocol = "http://";
-                if (sectorInit.port == undefined){
-                    sectorInit.port = 80;
-                }
-                url = protocol + sectorInit.host;
-                if (sectorInit.port != 80){
-                    url += ":" + sectorInit.port;
-                }
+                defaultPort = 80;
             }
             else if (sectorInit.type == MinuetServerListenType.https){
                 protocol = "https://";
-                if (sectorInit.port == undefined){
-                    sectorInit.port = 443;
-                }
-
-
+                defaultPort = 443;
             }
             else if (sectorInit.type == MinuetServerListenType.webSocket){
                 protocol = "ws://";
-                if (sectorInit.port == undefined){
-                    sectorInit.port = 80;
-                }
-
-
+                defaultPort = 80;
             }
             else if (sectorInit.type == MinuetServerListenType.webSocketSSL){
                 protocol = "wss://";
-                if (sectorInit.port == undefined){
-                    sectorInit.port = 443;
-                }
-
-
+                defaultPort = 443;
             }
 
-
+            if (sectorInit.port == undefined){
+                sectorInit.port = defaultPort;
+            }
+            url = protocol + sectorInit.host;
+            if (sectorInit.port != defaultPort){
+                url += ":" + sectorInit.port;
+            }
 
             const sector : MinuetServerSector = {
                 name: sectorName,
                 root: sectorPath,
-                initialize: sectorInit,
+                enable: sectorInit.enable,
+                type: sectorInit.type,
+                host: sectorInit.host,
+                port: sectorInit.port,
+                modules: sectorInit.modules,
                 url: url,
             };
 
@@ -154,14 +145,96 @@ export class Core {
         return res;
     }
 
-    
+    public static getLbServers(init: MineutServerInit) : Array<LoadBalancerServer> {
+        let res : Array<LoadBalancerServer> = [];
+        let usePorts = {
+            http: [],
+            webSocket: [],
+        };
+        const sectors = this.getSectors(init);
+        const sc = Object.keys(sectors);
+        for (let n = 0 ; n < sc.length ; n++){
+            const name = sc[n];
+            const sector = sectors[name];
+
+            if (sector.type == MinuetServerListenType.http) {
+                if (usePorts.http.indexOf(sector.port) > -1){
+                    continue;
+                }                
+                usePorts.http.push(sector.port);
+                res.push({
+                    type: LoadBalancerServerType.http,
+                    port: sector.port,
+                });
+            }
+            else if (sector.type == MinuetServerListenType.https) {
+                res.push({
+                    type: LoadBalancerServerType.https,
+                    port: sector.port,
+                    ssl: {
+                        domain: sector.host,
+                        key: sector.ssl.key,
+                        cert: sector.ssl.cert,
+                        ca: sector.ssl.ca,
+                    },
+                });
+            }
+            else if (sector.type == MinuetServerListenType.webSocket) {
+                if (usePorts.webSocket.indexOf(sector.port) >-1){
+                    continue;
+                }
+                res.push({
+                    type: LoadBalancerServerType.webSocket,
+                    port: sector.port,
+                });
+            }
+            else if (sector.type == MinuetServerListenType.webSocketSSL) {
+                res.push({
+                    type: LoadBalancerServerType.webSocketSSL,
+                    port: sector.port,
+                    ssl: {
+                        domain: sector.host,
+                        key: sector.ssl.key,
+                        cert: sector.ssl.cert,
+                        ca: sector.ssl.ca,
+                    },
+                });
+            }
+        }
+        return res;
+    }
+
+    public static cmdOutSectors(sectors : MinuetServerSectors) {
+        let out : string = "\0<Listen Sector Server>\n";
+        const sc = Object.keys(sectors);
+        const head =  " name".padEnd(10) + " | " + "type".padEnd(10) + " | " + "url".padEnd(40) + " | " +  "ssl".padEnd(8) + " | " + "enable".padEnd(10);
+        let line = "";
+        for (let n = 0 ; n < head.length ; n++){
+            line += "-";
+        }
+        out += head + "\n";
+        out += line + "\n";
+        for (let n = 0 ; n < sc.length ; n++) {
+            const name = sc[n];
+            const sector = sectors[name];
+            let ssl = false;
+            if (sector.ssl) ssl = true;
+            const td = (" " + sector.name).padEnd(10) + " | " + sector.type.padEnd(10) + " | "+ sector.url.padEnd(40) + " | " + ssl.toString().padEnd(8) + " | " + sector.enable.toString().padEnd(10);
+            out += td + "\n";
+            let line = "";
+            for (let n2 = 0 ; n2 < td.length ; n2++){
+                line += "-";
+            }
+            out += line + "\n";
+        }
+
+        console.log(out);
+    }
 }
 
 interface MineutServerInit {
     processTitle : string,
-
     loadBalancer: LoadBalancerOption,
-
     sectorPaths: MineutServerInitSectorPaths,
 }
 
@@ -171,25 +244,17 @@ interface MineutServerInitSectorPaths {
 
 interface MinuetServerSectorInit {
     name: string,
-
     enable: boolean,
-
     type?: MinuetServerListenType,
-
     host: string,
-
     port?: number,
-
     ssl?: MinuetServerSectorInitSSL,
-
     modules: Array<string>,
 }
 
 interface MinuetServerSectorInitSSL {
     key: string,
-    
     cert: string,
-
     ca: Array<string>,
 }
 
@@ -200,13 +265,13 @@ interface MinuetServerSectors {
 interface MinuetServerSector {
     name: string,
     root: string,
-    initialize: MinuetServerSectorInit,
+    enable: boolean,
+    type?: MinuetServerListenType,
+    host: string,
+    port?: number,
+    ssl?: MinuetServerSectorInitSSL,
+    modules: Array<string>,
     url: string,
-}
-
-interface MinuetServerOption {
-
-
 }
 
 enum MinuetServerListenType {
@@ -216,7 +281,7 @@ enum MinuetServerListenType {
     webSocketSSL = "webSocketSSL",
 }
 
-class MineutServer {
+export class MinuetServer {
 
     private init : MineutServerInit;
 
@@ -247,37 +312,31 @@ class MineutServer {
     //      }
         
             this.init = Core.getInit();
-            console.log("# read init");
+            console.log("# read init\n");
 
             // process title
             process.title = this.init.processTitle.toString();
 
             const sectors = Core.getSectors(this.init);
 
-            console.log(sectors);
+            const getLbServers = Core.getLbServers(this.init);
+        
+            Core.cmdOutSectors(sectors);
 
-
-/*
             new LoadBalancer({
                 type: this.init.loadBalancer.type,
                 maps: this.init.loadBalancer.maps,
                 workPath:  __dirname + "/server/worker",
-                servers: [
-                    { type: LoadBalancerServerType.http, port: 8000 },
-                ],
+                servers: getLbServers,
             });
-            console.log("# Listen http://localhost:8000");
-            */
+            console.log("# Listen Start!");
 
         }catch(error){
             console.log("[ERROR] : " + error.toString());
         }
-
     }
 
     public static getSector() {
 
     }
 }
-
-new MineutServer();

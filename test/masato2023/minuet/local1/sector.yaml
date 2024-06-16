@@ -17,7 +17,7 @@ type: http
 
 #-----------------------------------------------
 # Host Name
-host: localhost
+host: www.xtest1.com
 
 #-----------------------------------------------
 # Port Number
