@@ -1,0 +1,20 @@
+# ---------------------------------------------------------------------------
+# Minuet Server Module
+# module : web
+
+# root directory
+rootDir: publics
+
+# directory indexs
+directoryIndexs: 
+  - index.html
+
+# response header
+headers:
+
+  # server name
+  server_name: minuet-server
+
+  # cache control
+  cache-control: max-age=3605
+

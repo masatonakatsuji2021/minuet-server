@@ -1,5 +1,6 @@
 import * as os from "os";
 import * as fs from "fs";
+import * as http from "http";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import { LoadBalancer, LoadBalancerOption, LoadBalancerType, LoadBalancerMap, LoadBalancerServer, LoadBalancerServerType } from "minuet-load-balancer";
@@ -129,16 +130,45 @@ export class Core {
                 url += ":" + sectorInit.port;
             }
 
-            const sector : MinuetServerSector = {
+            let moduleInits = [];
+            if (sectorInit.modules){
+                for (let n2 = 0 ; n2 < sectorInit.modules.length ; n2++){
+                    const moduleName = sectorInit.modules[n2];
+                    const moduleInitPath = sectorPath + "/module." + moduleName + ".yaml";
+                    let moduleInit = {};
+                    if (fs.existsSync(moduleInitPath)) {
+                        moduleInit = Core.readFile(moduleInitPath);
+                    }
+
+                    const buffer = {
+                        name: moduleName,
+                        init: moduleInit,
+                    };
+
+                    moduleInits.push(buffer);
+                }
+            }
+
+
+            let sector : MinuetServerSector = {
                 name: sectorName,
                 root: sectorPath,
                 enable: sectorInit.enable,
                 type: sectorInit.type,
                 host: sectorInit.host,
                 port: sectorInit.port,
-                modules: sectorInit.modules,
+                moduleInit: moduleInits,
+                modules: [],
                 url: url,
             };
+
+            if (sector.moduleInit){
+                for (let n2 = 0 ; n2 < sector.moduleInit.length ; n2++){
+                    const moduleInit = sector.moduleInit[n2];
+                    const module = Core.getModle(moduleInit, sector);
+                    sector.modules.push(module);
+                }
+            }
 
             res[sectorName] = sector;
         }
@@ -204,6 +234,37 @@ export class Core {
         return res;
     }
 
+    public static getModle(moduleInit : any, sector: MinuetServerSector) : MinuetServerModuleBase{
+
+        let fullModuleNames : Array<string> = [
+            "minuet-server-" + moduleInit.name,
+            moduleInit.name,
+        ];
+
+        let module;
+        for(let n=0; n < fullModuleNames.length ; n++){
+            const fullModuleName : string = fullModuleNames[n];
+            const moduleClassname : string = "MinuetServerModule" + moduleInit.name.substring(0,1).toUpperCase() + moduleInit.name.substring(1);
+            try{
+                const moduleClass = require(fullModuleName)[moduleClassname];
+                module = new moduleClass();
+                module.sector = sector;
+                module.name = moduleInit.name;
+                module.init = moduleInit.init;
+                module.onBegin();
+                break;
+            }catch(err){
+                console.log(err);
+            }               
+        }
+
+        if (!module){
+            return;
+        }
+
+        return module;
+    }
+
     public static cmdOutSectors(sectors : MinuetServerSectors) {
         let out : string = "\0<Listen Sector Server>\n";
         const sc = Object.keys(sectors);
@@ -249,7 +310,7 @@ interface MinuetServerSectorInit {
     host: string,
     port?: number,
     ssl?: MinuetServerSectorInitSSL,
-    modules: Array<string>,
+    modules?: Array<string>,
 }
 
 interface MinuetServerSectorInitSSL {
@@ -262,7 +323,7 @@ interface MinuetServerSectors {
     [x: string] : MinuetServerSector,
 }
 
-interface MinuetServerSector {
+export interface MinuetServerSector {
     name: string,
     root: string,
     enable: boolean,
@@ -270,7 +331,8 @@ interface MinuetServerSector {
     host: string,
     port?: number,
     ssl?: MinuetServerSectorInitSSL,
-    modules: Array<string>,
+    moduleInit: Array<any>,
+    modules: Array<MinuetServerModuleBase>,
     url: string,
 }
 
@@ -333,10 +395,56 @@ export class MinuetServer {
 
         }catch(error){
             console.log("[ERROR] : " + error.toString());
+            console.log(error.stack);
         }
     }
 
     public static getSector() {
 
     }
+}
+
+/**
+ * ***Minuet Server Module Base*** : Third parties use this class to create modules that succeed.  
+ * The derived class name should be **MinuetServerModule{module name}**.
+ * 
+ * Exp:  If your module name is ``m01``, put the following code in the ``index.ts`` file:.
+ * 
+ * ```typescript
+ * export class MinuetServerModuleM01 extends MinuetServerModuleBase {
+ *      public onRequest(req, res) {
+ *          // listen code...
+ *      }
+ * }
+ * ```
+ */
+export class MinuetServerModuleBase {
+
+    /**
+     * ***name*`** : Module name
+     */
+    public name : string;
+
+    /**
+     * ***sector*** : Sector information at the time of request.
+     */
+    public sector : MinuetServerSector;
+
+    /**
+     * ***init*** : Module initial setting information by sector.
+     */
+    public init : any;
+
+    /**
+     * ***onBegin*** : For events after the module is instantiated.
+     */
+    public onBegin() {}
+
+    /**
+     * ***onRequest*** : Event when listening for a request.
+     * @param req 
+     * @param res 
+     */
+    public onRequest(req : http.IncomingMessage, res : http.ServerResponse){}
+
 }

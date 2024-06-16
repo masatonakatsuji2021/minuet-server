@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MinuetServer = exports.Core = void 0;
+exports.MinuetServerModuleBase = exports.MinuetServer = exports.Core = void 0;
 const os = require("os");
 const fs = require("fs");
 const yaml = require("js-yaml");
@@ -102,16 +102,40 @@ class Core {
             if (sectorInit.port != defaultPort) {
                 url += ":" + sectorInit.port;
             }
-            const sector = {
+            let moduleInits = [];
+            if (sectorInit.modules) {
+                for (let n2 = 0; n2 < sectorInit.modules.length; n2++) {
+                    const moduleName = sectorInit.modules[n2];
+                    const moduleInitPath = sectorPath + "/module." + moduleName + ".yaml";
+                    let moduleInit = {};
+                    if (fs.existsSync(moduleInitPath)) {
+                        moduleInit = Core.readFile(moduleInitPath);
+                    }
+                    const buffer = {
+                        name: moduleName,
+                        init: moduleInit,
+                    };
+                    moduleInits.push(buffer);
+                }
+            }
+            let sector = {
                 name: sectorName,
                 root: sectorPath,
                 enable: sectorInit.enable,
                 type: sectorInit.type,
                 host: sectorInit.host,
                 port: sectorInit.port,
-                modules: sectorInit.modules,
+                moduleInit: moduleInits,
+                modules: [],
                 url: url,
             };
+            if (sector.moduleInit) {
+                for (let n2 = 0; n2 < sector.moduleInit.length; n2++) {
+                    const moduleInit = sector.moduleInit[n2];
+                    const module = Core.getModle(moduleInit, sector);
+                    sector.modules.push(module);
+                }
+            }
             res[sectorName] = sector;
         }
         return res;
@@ -172,6 +196,33 @@ class Core {
             }
         }
         return res;
+    }
+    static getModle(moduleInit, sector) {
+        let fullModuleNames = [
+            "minuet-server-" + moduleInit.name,
+            moduleInit.name,
+        ];
+        let module;
+        for (let n = 0; n < fullModuleNames.length; n++) {
+            const fullModuleName = fullModuleNames[n];
+            const moduleClassname = "MinuetServerModule" + moduleInit.name.substring(0, 1).toUpperCase() + moduleInit.name.substring(1);
+            try {
+                const moduleClass = require(fullModuleName)[moduleClassname];
+                module = new moduleClass();
+                module.sector = sector;
+                module.name = moduleInit.name;
+                module.init = moduleInit.init;
+                module.onBegin();
+                break;
+            }
+            catch (err) {
+                console.log(err);
+            }
+        }
+        if (!module) {
+            return;
+        }
+        return module;
     }
     static cmdOutSectors(sectors) {
         let out = "\0<Listen Sector Server>\n";
@@ -248,9 +299,15 @@ class MinuetServer {
         }
         catch (error) {
             console.log("[ERROR] : " + error.toString());
+            console.log(error.stack);
         }
     }
     static getSector() {
     }
 }
 exports.MinuetServer = MinuetServer;
+class MinuetServerModuleBase {
+    onBegin() { }
+    onRequest(req, res) { }
+}
+exports.MinuetServerModuleBase = MinuetServerModuleBase;

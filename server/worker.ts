@@ -1,12 +1,12 @@
 import { LoadBalancerListner } from "minuet-load-balancer";
-import { MinuetServer, Core } from "../";
+import { MinuetServer, Core, MinuetServerModuleBase } from "../";
 
 const init = Core.getInit();
 const sectors = Core.getSectors(init);
 
 export default class Listener extends LoadBalancerListner {
 
-    public request(){
+    public async request(){
         const req = this.req;
         const res = this.res;
 
@@ -20,7 +20,12 @@ export default class Listener extends LoadBalancerListner {
                 continue;
             }
 
-            
+            const modules : Array<MinuetServerModuleBase> = sector.modules;
+
+            for (let n2 = 0 ; n2 < modules.length ; n2++){
+                const module : MinuetServerModuleBase = modules[n2];
+                await module.onRequest(req, res);
+            }
 
             res.write("...............OK!!");
             res.write("\n sector = " + sector.name);

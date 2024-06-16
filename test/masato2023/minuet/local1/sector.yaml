@@ -16,7 +16,7 @@ enable: true
 type: http
 
 #-----------------------------------------------
-# Host Name
+# Host Name (domain)
 host: www.xtest1.com
 
 #-----------------------------------------------
