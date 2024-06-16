@@ -262,6 +262,46 @@ class Core {
         }
         console.log(out);
     }
+    static cmdOutLoadBalancer(loadBalancer) {
+        let out = "\n";
+        out += "<LoadBalancer>\n";
+        out += "type = " + loadBalancer.type;
+        out += "\n";
+        const head = " " + "number".padEnd(9) + " | " + "mode".padEnd(20) + " | " + "proxy".padEnd(20);
+        let line = "";
+        for (let n = 0; n < head.length; n++) {
+            line += "-";
+        }
+        out += head + "\n";
+        out += line + "\n";
+        let number = 0;
+        for (let n = 0; n < loadBalancer.maps.length; n++) {
+            let map = loadBalancer.maps[n];
+            if (!map.clone) {
+                map.clone = 1;
+            }
+            else {
+                if (map.clone == "auto") {
+                    map.clone = os.cpus().length;
+                }
+            }
+            if (!map.proxy) {
+                map.proxy = "";
+            }
+            for (let n2 = 0; n2 < map.clone; n2++) {
+                const td = " " + number.toString().padEnd(9) + " | " + map.mode.padEnd(20) + " | " + map.proxy.toString().padEnd(20);
+                let line = "";
+                for (let n = 0; n < td.length; n++) {
+                    line += "-";
+                }
+                out += td + "\n";
+                out += line + "\n";
+                number++;
+            }
+            number++;
+        }
+        console.log(out);
+    }
 }
 exports.Core = Core;
 //    private static root: string = "/home";
@@ -290,16 +330,18 @@ class MinuetServer {
                 });
                 console.log("# mkdir " + Core.initDir);
             }
-            //        if (!fs.existsSync(MinuetServerCore.initDir)){
-            fs.copyFileSync(__dirname + "/template/init.yaml", Core.initPath);
-            console.log("# make  init.yaml " + Core.initPath);
-            //      }
+            if (!fs.existsSync(Core.initDir)) {
+                fs.copyFileSync(__dirname + "/template/init.yaml", Core.initPath);
+                console.log("# make  init.yaml " + Core.initPath);
+            }
             this.init = Core.getInit();
             console.log("# read init\n");
             // process title
             process.title = this.init.processTitle.toString();
             const sectors = Core.getSectors(this.init);
             const getLbServers = Core.getLbServers(this.init);
+            Core.cmdOutLoadBalancer(this.init.loadBalancer);
+            console.log("");
             Core.cmdOutSectors(sectors);
             new minuet_load_balancer_1.LoadBalancer({
                 type: this.init.loadBalancer.type,
@@ -307,14 +349,12 @@ class MinuetServer {
                 workPath: __dirname + "/server/worker",
                 servers: getLbServers,
             });
-            console.log("# Listen Start!");
+            console.log("\n# Listen Start!");
         }
         catch (error) {
             console.log("[ERROR] : " + error.toString());
             console.log(error.stack);
         }
-    }
-    static getSector() {
     }
 }
 exports.MinuetServer = MinuetServer;
