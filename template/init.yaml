@@ -1,0 +1,16 @@
+#--------------------------------------------------------------------------
+# minuet initilize
+
+# process title
+processTitle: minuet-server
+
+# Load Balancer
+loadBalancer:
+  type: RoundRobin
+  maps:
+    - mode: WorkerThreads
+      clone: auto
+
+# Sector Paths
+sectorPaths:  
+  local1: test/masato2023/minuet/local1
