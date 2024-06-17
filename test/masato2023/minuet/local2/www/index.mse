@@ -1,3 +1,4 @@
-<? await include("include/header.mseh"); ?>
-    <h1>Hallo Mse World!!</h1>
-    <? await include("include/footer.mseh"); ?>
+<script mse>await include("include/header.mseh");</script>
+<h1>Hallo Mse World!!</h1>
+<p>Text Sample ..........</p>
+<script mse>await include("include/footer.mseh");</script>
