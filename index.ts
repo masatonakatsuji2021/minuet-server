@@ -7,11 +7,16 @@ import { LoadBalancer, LoadBalancerOption, LoadBalancerType, LoadBalancerMap, Lo
 
 export class Core {
 
-//    private static root: string = "/home";
-    private static root: string = "test";
-
     public static get rootDir() : string {
-        return this.root + "/" + os.userInfo().username + "/minuet";
+        /*
+        if (os.platform() == "win32"){
+            return "/user/minuet";
+        }
+        else if (os.platform() == "linux") {
+            return "/home/minuet";
+        }
+        */
+        return "test/minuet";
     }
 
     public static get initDir() : string {
@@ -401,24 +406,7 @@ export class MinuetServer {
             console.log("#### Minuet Server Start!");
             console.log("");
 
-            if (!fs.existsSync(Core.rootDir)){
-                fs.mkdirSync(Core.rootDir, {
-                    recursive: true,
-                });    
-                console.log("# mkdir " + Core.rootDir);
-            }
-
-            if (!fs.existsSync(Core.initDir)){
-                fs.mkdirSync(Core.initDir, {
-                    recursive: true,
-                });    
-                console.log("# mkdir " + Core.initDir);
-            }
-
-            if (!fs.existsSync(Core.initDir)){
-                fs.copyFileSync(__dirname + "/template/init.yaml", Core.initPath);
-                console.log("# make  init.yaml " + Core.initPath);    
-            }
+            this.begin();
         
             this.init = Core.getInit();
             console.log("# read init\n");
@@ -445,6 +433,13 @@ export class MinuetServer {
         }catch(error){
             console.log("[ERROR] : " + error.toString());
             console.log(error.stack);
+        }
+    }
+
+    private begin() {
+        if (!fs.existsSync(Core.rootDir)){
+            fs.mkdirSync(Core.rootDir);
+            console.log("# mkdir " + Core.rootDir);
         }
     }
 }

@@ -24,7 +24,10 @@ export default class Listener extends LoadBalancerListner {
 
             for (let n2 = 0 ; n2 < modules.length ; n2++){
                 const module : MinuetServerModuleBase = modules[n2];
-                const status = await module.onRequest(req, res);
+                let status : boolean;
+                if (module.onRequest){
+                    status = await module.onRequest(req, res);
+                }
                 if (status) break;
             }
         }

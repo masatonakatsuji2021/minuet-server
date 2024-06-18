@@ -9,9 +9,9 @@ loadBalancer:
   type: RoundRobin
   maps:
     - mode: WorkerThreads
-      clone: auto
+      clone: 1
 
 # Sector Paths
 sectorPaths:  
-  local1: test/masato2023/minuet/local1
-  local2: test/masato2023/minuet/local2
+  local1: test/minuet/local1
+  local2: test/minuet/local2

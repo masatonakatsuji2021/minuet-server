@@ -16,7 +16,15 @@ const yaml = require("js-yaml");
 const minuet_load_balancer_1 = require("minuet-load-balancer");
 class Core {
     static get rootDir() {
-        return this.root + "/" + os.userInfo().username + "/minuet";
+        /*
+        if (os.platform() == "win32"){
+            return "/user/minuet";
+        }
+        else if (os.platform() == "linux") {
+            return "/home/minuet";
+        }
+        */
+        return "test/minuet";
     }
     static get initDir() {
         return this.rootDir + "/conf";
@@ -304,8 +312,6 @@ class Core {
     }
 }
 exports.Core = Core;
-//    private static root: string = "/home";
-Core.root = "test";
 var MinuetServerListenType;
 (function (MinuetServerListenType) {
     MinuetServerListenType["http"] = "http";
@@ -318,22 +324,7 @@ class MinuetServer {
         try {
             console.log("#### Minuet Server Start!");
             console.log("");
-            if (!fs.existsSync(Core.rootDir)) {
-                fs.mkdirSync(Core.rootDir, {
-                    recursive: true,
-                });
-                console.log("# mkdir " + Core.rootDir);
-            }
-            if (!fs.existsSync(Core.initDir)) {
-                fs.mkdirSync(Core.initDir, {
-                    recursive: true,
-                });
-                console.log("# mkdir " + Core.initDir);
-            }
-            if (!fs.existsSync(Core.initDir)) {
-                fs.copyFileSync(__dirname + "/template/init.yaml", Core.initPath);
-                console.log("# make  init.yaml " + Core.initPath);
-            }
+            this.begin();
             this.init = Core.getInit();
             console.log("# read init\n");
             // process title
@@ -354,6 +345,12 @@ class MinuetServer {
         catch (error) {
             console.log("[ERROR] : " + error.toString());
             console.log(error.stack);
+        }
+    }
+    begin() {
+        if (!fs.existsSync(Core.rootDir)) {
+            fs.mkdirSync(Core.rootDir);
+            console.log("# mkdir " + Core.rootDir);
         }
     }
 }
