@@ -126,7 +126,9 @@ class Core {
                     const moduleInitPath = sectorPath + "/module." + moduleName + ".yaml";
                     let moduleInit = {};
                     if (fs.existsSync(moduleInitPath)) {
-                        moduleInit = Core.readFile(moduleInitPath);
+                        const init = Core.readFile(moduleInitPath);
+                        if (init)
+                            moduleInit = init;
                     }
                     const buffer = {
                         name: moduleName,
@@ -219,15 +221,32 @@ class Core {
             "minuet-server-" + moduleInit.name,
             moduleInit.name,
         ];
-        if (moduleInit.init.formalModuleName) {
-            fullModuleNames.push(moduleInit.init.formalModuleName);
+        if (moduleInit.init) {
+            if (moduleInit.init.formalModuleName) {
+                fullModuleNames.push(moduleInit.init.formalModuleName);
+            }
         }
         let module;
         for (let n = 0; n < fullModuleNames.length; n++) {
             const fullModuleName = fullModuleNames[n];
             const moduleClassname = "MinuetServerModule" + moduleInit.name.substring(0, 1).toUpperCase() + moduleInit.name.substring(1);
             try {
-                const moduleClass = require(fullModuleName)[moduleClassname];
+                let moduleClassBase;
+                try {
+                    moduleClassBase = require(fullModuleName);
+                }
+                catch (err) {
+                    //                    console.log("# [WARM] not found = " + fullModuleName);
+                    throw Error("");
+                }
+                let moduleClass;
+                try {
+                    moduleClass = moduleClassBase[moduleClassname];
+                }
+                catch (err) {
+                    console.log(err);
+                    throw Error("");
+                }
                 module = new moduleClass();
                 module.sector = sector;
                 module.name = moduleInit.name;
@@ -383,6 +402,18 @@ class MinuetServerModuleBase {
         return __awaiter(this, void 0, void 0, function* () {
             return false;
         });
+    }
+    getModule(moduleName) {
+        const moduleList = this.sector.modules;
+        let res;
+        for (let n = 0; n < moduleList.length; n++) {
+            const module = moduleList[n];
+            if (module.name == moduleName) {
+                res = module;
+                break;
+            }
+        }
+        return res;
     }
 }
 exports.MinuetServerModuleBase = MinuetServerModuleBase;

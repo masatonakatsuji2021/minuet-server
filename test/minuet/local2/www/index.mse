@@ -1,4 +1,13 @@
 <script mse>await include("include/header.mseh");</script>
 <h1>Hallo Mse World!!</h1>
 <p>Text Sample ..........</p>
+<script mse>
+const d_ = new Date();
+
+const date = d_.getFullYear() + "/" + ("0" + (d_.getMonth() + 1)).slice(-2) + "/" + ("0" + d_.getDate()).slice(-2);
+const time = ("0" + d_.getHours()).slice(-2) + ":" + ("0" + d_.getMinutes()).slice(-2) + ":" + ("0" + d_.getSeconds()).slice(-2);
+echo(date + " " + time);
+</script>
+
+
 <script mse>await include("include/footer.mseh");</script>

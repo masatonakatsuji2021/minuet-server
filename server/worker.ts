@@ -21,9 +21,11 @@ export default class Listener extends LoadBalancerListner {
             }
 
             const modules : Array<MinuetServerModuleBase> = sector.modules;
-
             for (let n2 = 0 ; n2 < modules.length ; n2++){
                 const module : MinuetServerModuleBase = modules[n2];
+
+                if (!module) continue;
+
                 let status : boolean;
                 if (module.onRequest){
                     status = await module.onRequest(req, res);
