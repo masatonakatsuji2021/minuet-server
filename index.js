@@ -15,16 +15,21 @@ const fs = require("fs");
 const yaml = require("js-yaml");
 const minuet_load_balancer_1 = require("minuet-load-balancer");
 class Core {
+    static setRootDir(target) {
+        this._rootDir = target;
+    }
     static get rootDir() {
-        /*
-        if (os.platform() == "win32"){
-            return "/user/minuet";
+        if (this._rootDir) {
+            return this._rootDir;
         }
-        else if (os.platform() == "linux") {
-            return "/home/minuet";
+        else {
+            if (os.platform() == "win32") {
+                return "/user/minuet";
+            }
+            else if (os.platform() == "linux") {
+                return "/home/minuet";
+            }
         }
-        */
-        return "test/minuet";
     }
     static get initDir() {
         return this.rootDir + "/conf";
@@ -339,7 +344,11 @@ var MinuetServerListenType;
     MinuetServerListenType["webSocketSSL"] = "webSocketSSL";
 })(MinuetServerListenType || (MinuetServerListenType = {}));
 class MinuetServer {
-    constructor() {
+    constructor(options) {
+        if (options) {
+            if (options.rootDir != undefined)
+                Core.setRootDir(options.rootDir);
+        }
         try {
             console.log("#### Minuet Server Start!");
             console.log("");
@@ -358,6 +367,7 @@ class MinuetServer {
                 maps: this.init.loadBalancer.maps,
                 workPath: __dirname + "/server/worker",
                 servers: getLbServers,
+                option: options,
             });
             console.log("\n# Listen Start!");
         }

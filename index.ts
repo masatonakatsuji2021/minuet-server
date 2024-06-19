@@ -7,16 +7,24 @@ import { LoadBalancer, LoadBalancerOption, LoadBalancerType, LoadBalancerMap, Lo
 
 export class Core {
 
+    private static _rootDir : string;
+
+    public static setRootDir(target : string) {
+        this._rootDir = target;
+    }
+
     public static get rootDir() : string {
-        /*
-        if (os.platform() == "win32"){
-            return "/user/minuet";
+        if (this._rootDir) {
+            return this._rootDir;
         }
-        else if (os.platform() == "linux") {
-            return "/home/minuet";
+        else {
+            if (os.platform() == "win32"){
+                return "/user/minuet";
+            }
+            else if (os.platform() == "linux") {
+                return "/home/minuet";
+            }
         }
-        */
-        return "test/minuet";
     }
 
     public static get initDir() : string {
@@ -417,7 +425,11 @@ export class MinuetServer {
 
     private init : MineutServerInit;
 
-    public constructor() {
+    public constructor(options?) {
+
+        if (options){
+            if (options.rootDir != undefined) Core.setRootDir(options.rootDir);
+        }
 
         try{
 
@@ -445,6 +457,7 @@ export class MinuetServer {
                 maps: this.init.loadBalancer.maps,
                 workPath:  __dirname + "/server/worker",
                 servers: getLbServers,
+                option: options,
             });
             console.log("\n# Listen Start!");
 

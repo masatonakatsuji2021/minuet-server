@@ -11,9 +11,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const minuet_load_balancer_1 = require("minuet-load-balancer");
 const __1 = require("../");
-const init = __1.Core.getInit();
-const sectors = __1.Core.getSectors(init);
+let sectors;
 class Listener extends minuet_load_balancer_1.LoadBalancerListner {
+    static begin() {
+        if (this.option) {
+            if (this.option.rootDir) {
+                __1.Core.setRootDir(this.option.rootDir);
+            }
+        }
+        const init = __1.Core.getInit();
+        sectors = __1.Core.getSectors(init);
+    }
     request() {
         return __awaiter(this, void 0, void 0, function* () {
             const req = this.req;

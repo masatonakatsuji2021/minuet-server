@@ -1,10 +1,20 @@
 import { LoadBalancerListner } from "minuet-load-balancer";
-import { MinuetServer, Core, MinuetServerModuleBase } from "../";
+import { Core, MinuetServerModuleBase } from "../";
 
-const init = Core.getInit();
-const sectors = Core.getSectors(init);
+let sectors;
 
 export default class Listener extends LoadBalancerListner {
+
+    public static begin() {
+        if (this.option) {
+            if (this.option.rootDir) {
+                Core.setRootDir(this.option.rootDir);
+            }
+        }
+
+        const init = Core.getInit();
+        sectors = Core.getSectors(init);
+    }
 
     public async request(){
         const req = this.req;
