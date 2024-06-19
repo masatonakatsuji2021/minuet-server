@@ -27,6 +27,8 @@
     "js-yaml": "^4.1.0",
     "minuet-load-balancer": "git+https://github.com/masatonakatsuji2021/minuet-load-balancer.git",
     "minuet-script-engine" : "git+https://github.com/masatonakatsuji2021/minuet-script-engine.git",
+    "minuet-server-accessor": "git+https://github.com/masatonakatsuji2021/minuet-server-accessor.git",
+    "minuet-server-logger": "git+https://github.com/masatonakatsuji2021/minuet-server-logger.git",
     "minuet-server-web": "git+https://github.com/masatonakatsuji2021/minuet-server-web.git"
   }
 }

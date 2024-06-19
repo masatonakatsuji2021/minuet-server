@@ -2,17 +2,37 @@
 # Minuet Server Module
 # module : minuet-script-engine(mse)
 
+#-----------------------------------------------
+# formal module name (mse => minuet-script-engine)
 formalModuleName: minuet-script-engine
 
+#-----------------------------------------------
 # root directory
 rootDir: www
 
+#-----------------------------------------------
+# error page view
+pages:
+  # not found (404)
+  notFound: true
+  # internal server Error (500)
+  internalError: true
+
+#-----------------------------------------------
 # directory indexs
 directoryIndexs: 
   - index.mse
 
+#-----------------------------------------------
 # response header
 headers:
-
   # server name
   server_name: minuet-server-mse
+
+#-----------------------------------------------
+# access log
+logAccess: access
+
+#-----------------------------------------------
+# error log
+logError: error

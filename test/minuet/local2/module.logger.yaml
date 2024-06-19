@@ -1,0 +1,21 @@
+# ---------------------------------------------------------------------------
+# Minuet Server Module
+# module : minuet-script-logger
+
+#-----------------------------------------------
+# log write directory
+tempdir: logs
+
+#-----------------------------------------------
+# log initializetion list
+logs: 
+
+  # access log
+  - name: access
+    path: access-{year}-{month}.log
+    format: "{datetime} {status-code} {method} {host} {request-url} {referer} {user-agent}"
+
+  # error log
+  - name: error
+    path: error-{year}-{month}.log
+    format: "{datetime} {status-code} {method} {host} {request-url} {referer} {user-agent} {message}" 

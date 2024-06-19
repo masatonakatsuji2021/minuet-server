@@ -8,11 +8,12 @@
 name: local2
 
 #-----------------------------------------------
-# Enable
+# Sector Enable
 enable: true
 
 #-----------------------------------------------
-# Sector Listen Type
+# Sector Listen Type 
+# Selected pattern http, https, webSocket, webSocketSSL
 type: http
 
 #-----------------------------------------------
@@ -26,12 +27,12 @@ port: 2500
 #-----------------------------------------------
 # SSL Setting (Type = https only)
 # ssl:
-#  key: ssl/server.key
+#  key:  ssl/server.key
 #  cert: ssl/server.crt
 
 #-----------------------------------------------
 # modules
 modules:
-  - logger
-  - mse
-  - web
+  - logger      # logger (=> module.logger.yaml)
+  - web         # web (=> module.web.yaml)
+  - mse         # mse (=> module.mse.yaml)
