@@ -44,7 +44,7 @@ export class Core {
         }
         else {
             if (os.platform() == "win32"){
-                return "/user/minuet";
+                return "/minuet";
             }
             else if (os.platform() == "linux") {
                 return "/home/minuet";
