@@ -15,3 +15,4 @@ loadBalancer:
 sectorPaths:  
   local1: minuet/local1
   local2: minuet/local2
+  local3: minuet/local3
