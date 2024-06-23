@@ -37,7 +37,7 @@ const minuet_load_balancer_1 = require("minuet-load-balancer");
 const __1 = require("../");
 let sectors;
 class Listener extends minuet_load_balancer_1.LoadBalancerListner {
-    static begin() {
+    begin() {
         if (this.option) {
             if (this.option.rootDir) {
                 __1.Core.setRootDir(this.option.rootDir);
@@ -46,10 +46,8 @@ class Listener extends minuet_load_balancer_1.LoadBalancerListner {
         const init = __1.Core.getInit();
         sectors = __1.Core.getSectors(init);
     }
-    request() {
+    listen(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const req = this.req;
-            const res = this.res;
             const sc = Object.keys(sectors);
             for (let n = 0; n < sc.length; n++) {
                 const sectorName = sc[n];

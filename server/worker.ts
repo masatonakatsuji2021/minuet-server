@@ -25,12 +25,13 @@
 
 import { LoadBalancerListner } from "minuet-load-balancer";
 import { Core, MinuetServerModuleBase } from "../";
+import { IncomingMessage, ServerResponse } from "http";
 
 let sectors;
 
 export default class Listener extends LoadBalancerListner {
 
-    public static begin() {
+    public begin() {
         if (this.option) {
             if (this.option.rootDir) {
                 Core.setRootDir(this.option.rootDir);
@@ -41,9 +42,7 @@ export default class Listener extends LoadBalancerListner {
         sectors = Core.getSectors(init);
     }
 
-    public async request(){
-        const req = this.req;
-        const res = this.res;
+    public async listen(req : IncomingMessage, res : ServerResponse){
 
         const sc = Object.keys(sectors);
         for (let n = 0 ; n < sc.length ; n++) {
