@@ -43,17 +43,22 @@ class Core {
         this._rootDir = target;
     }
     static get rootDir() {
-        if (this._rootDir) {
-            return this._rootDir;
-        }
-        else {
-            if (os.platform() == "win32") {
-                return "/minuet";
+        if (!this._rootDir) {
+            const mcpath = __dirname + "/" + Core._mConfig;
+            if (fs.existsSync(mcpath)) {
+                this._rootDir = fs.readFileSync(mcpath).toString();
             }
-            else if (os.platform() == "linux") {
-                return "/home/minuet";
+            else {
+                if (os.platform() == "win32") {
+                    this._rootDir = "/minuet";
+                }
+                else if (os.platform() == "linux") {
+                    this._rootDir = "/home/minuet";
+                }
+                fs.writeFileSync(mcpath, this._rootDir);
             }
         }
+        return this._rootDir;
     }
     static get initDir() {
         return this.rootDir + "/conf";
@@ -104,6 +109,8 @@ class Core {
     }
     static getSectors(init) {
         let res = {};
+        if (!init.sectorPaths)
+            return null;
         const spc = Object.keys(init.sectorPaths);
         for (let n = 0; n < spc.length; n++) {
             const sectorName = spc[n];
@@ -360,6 +367,7 @@ class Core {
     }
 }
 exports.Core = Core;
+Core._mConfig = ".m-config";
 var MinuetServerListenType;
 (function (MinuetServerListenType) {
     MinuetServerListenType["http"] = "http";
@@ -382,6 +390,10 @@ class MinuetServer {
             // process title
             process.title = this.init.processTitle.toString();
             const sectors = Core.getSectors(this.init);
+            if (!sectors) {
+                console.log("[ERROR] No sector information set.");
+                return;
+            }
             const getLbServers = Core.getLbServers(this.init);
             Core.cmdOutLoadBalancer(this.init.loadBalancer);
             console.log("");
