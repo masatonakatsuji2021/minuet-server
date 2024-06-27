@@ -103,9 +103,6 @@ class Core {
         if (!loadBalancer.maps || !Array.isArray(loadBalancer.maps)) {
             throw Error("\"loadBalancer.maps\" is invalid in Core Init.");
         }
-        this.initLoadBalancerMapsCheck(loadBalancer.maps);
-    }
-    static initLoadBalancerMapsCheck(maps) {
     }
     static getSectors(init) {
         let res = {};
@@ -187,8 +184,9 @@ class Core {
             if (sector.moduleInit) {
                 for (let n2 = 0; n2 < sector.moduleInit.length; n2++) {
                     const moduleInit = sector.moduleInit[n2];
-                    const module = Core.getModle(moduleInit, sector);
-                    sector.modules.push(module);
+                    const module = Core.setModule(moduleInit, sector);
+                    if (module)
+                        sector.modules.push(module);
                 }
             }
             res[sectorName] = sector;
@@ -220,12 +218,6 @@ class Core {
                 res.push({
                     type: minuet_load_balancer_1.LoadBalancerServerType.https,
                     port: sector.port,
-                    ssl: {
-                        domain: sector.host,
-                        key: sector.ssl.key,
-                        cert: sector.ssl.cert,
-                        ca: sector.ssl.ca,
-                    },
                 });
             }
             else if (sector.type == MinuetServerListenType.webSocket) {
@@ -241,20 +233,16 @@ class Core {
                 res.push({
                     type: minuet_load_balancer_1.LoadBalancerServerType.webSocketSSL,
                     port: sector.port,
-                    ssl: {
-                        domain: sector.host,
-                        key: sector.ssl.key,
-                        cert: sector.ssl.cert,
-                        ca: sector.ssl.ca,
-                    },
                 });
             }
         }
         return res;
     }
-    static getModle(moduleInit, sector) {
+    static setModule(moduleInit, sector) {
         let fullModuleNames = [
             "minuet-server-" + moduleInit.name,
+            sector.root + "/" + sector.name + "/node_modules/minuet-server-" + moduleInit.name,
+            sector.root + "/" + sector.name + "/node_modules/-" + moduleInit.name,
             moduleInit.name,
         ];
         if (moduleInit.init) {
@@ -272,7 +260,6 @@ class Core {
                     moduleClassBase = require(fullModuleName);
                 }
                 catch (err) {
-                    //                    console.log("# [WARM] not found = " + fullModuleName);
                     throw Error("");
                 }
                 let moduleClass;
@@ -280,14 +267,20 @@ class Core {
                     moduleClass = moduleClassBase[moduleClassname];
                 }
                 catch (err) {
-                    console.log(err);
                     throw Error("");
                 }
                 module = new moduleClass();
                 module.sector = sector;
                 module.name = moduleInit.name;
                 module.init = moduleInit.init;
-                module.onBegin();
+                try {
+                    if (module.onBegin) {
+                        module.onBegin();
+                    }
+                }
+                catch (err) {
+                    console.log(err);
+                }
                 break;
             }
             catch (err) {
@@ -295,6 +288,7 @@ class Core {
             }
         }
         if (!module) {
+            console.log("[WARM] Not Found Module \"" + moduleInit.name + "\".");
             return;
         }
         return module;

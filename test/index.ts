@@ -1,4 +1,4 @@
 import { MinuetServer } from "minuet-server";
 new MinuetServer({
-    rootDir: "minuet",
+    rootDir: __dirname,
 });
