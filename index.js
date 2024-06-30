@@ -260,6 +260,9 @@ class Core {
                     moduleClassBase = require(fullModuleName);
                 }
                 catch (err) {
+                    if (err.message.indexOf("Cannot find module") === -1) {
+                        console.log(err);
+                    }
                     throw Error("");
                 }
                 let moduleClass;
