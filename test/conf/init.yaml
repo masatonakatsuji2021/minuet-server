@@ -13,6 +13,6 @@ loadBalancer:
 
 # Sector Paths
 sectorPaths:  
-  local1: C:\Users\nakat\Desktop\new_project\node_modules\minuet-server\test\local1
-  local2: C:\Users\nakat\Desktop\new_project\node_modules\minuet-server\test\local2
-  local3: C:\Users\nakat\Desktop\new_project\node_modules\minuet-server\test\local3
+  local1: local1
+  local2: local2
+  local3: local3
