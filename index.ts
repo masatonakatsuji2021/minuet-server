@@ -514,7 +514,7 @@ export class MinuetServer {
  * 
  * ```typescript
  * export class MinuetServerModuleM01 extends MinuetServerModuleBase {
- *      public onRequest(req, res) {
+ *      public onListen(req, res) {
  *          // listen code...
  *      }
  * }
@@ -543,11 +543,15 @@ export class MinuetServerModuleBase {
     public onBegin() {}
 
     /**
-     * ***onRequest*** : Event when listening for a request.
+     * ***onListen*** : Event when listening for a request.
      * @param req 
      * @param res 
      */
-    public async onRequest(req : http.IncomingMessage, res : http.ServerResponse) :  Promise<boolean> {
+    public async onListen(req : http.IncomingMessage, res : http.ServerResponse) :  Promise<boolean> {
+        return false;
+    }
+
+    public async onWsListen(webSocket: WebSocket) :  Promise<boolean> {
         return false;
     }
 

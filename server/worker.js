@@ -62,8 +62,8 @@ class Listener extends minuet_load_balancer_1.LoadBalancerListner {
                     if (!module)
                         continue;
                     let status;
-                    if (module.onRequest) {
-                        status = yield module.onRequest(req, res);
+                    if (module.onListen) {
+                        status = yield module.onListen(req, res);
                     }
                     if (status)
                         break;

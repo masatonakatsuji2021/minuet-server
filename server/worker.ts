@@ -61,8 +61,8 @@ export default class Listener extends LoadBalancerListner {
                 if (!module) continue;
                 
                 let status : boolean;
-                if (module.onRequest){
-                    status = await module.onRequest(req, res);
+                if (module.onListen){
+                    status = await module.onListen(req, res);
                 }
                 if (status) break;
             }

@@ -425,7 +425,7 @@ exports.MinuetServer = MinuetServer;
  *
  * ```typescript
  * export class MinuetServerModuleM01 extends MinuetServerModuleBase {
- *      public onRequest(req, res) {
+ *      public onListen(req, res) {
  *          // listen code...
  *      }
  * }
@@ -437,11 +437,16 @@ class MinuetServerModuleBase {
      */
     onBegin() { }
     /**
-     * ***onRequest*** : Event when listening for a request.
+     * ***onListen*** : Event when listening for a request.
      * @param req
      * @param res
      */
-    onRequest(req, res) {
+    onListen(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return false;
+        });
+    }
+    onWsListen(webSocket) {
         return __awaiter(this, void 0, void 0, function* () {
             return false;
         });
