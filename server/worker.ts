@@ -26,6 +26,7 @@
 import { LoadBalancerListner } from "minuet-load-balancer";
 import { Core, MinuetServerModuleBase } from "../";
 import { IncomingMessage, ServerResponse } from "http";
+import { MinuetServerSector, MinuetServerSectorVhost } from "minuet-server";
 
 let sectors;
 
@@ -43,30 +44,34 @@ export default class Listener extends LoadBalancerListner {
     }
 
     public async listen(req : IncomingMessage, res : ServerResponse){
-
+        let decisionSector : MinuetServerSector;
         const sc = Object.keys(sectors);
         for (let n = 0 ; n < sc.length ; n++) {
             const sectorName = sc[n];
-            const sector = sectors[sectorName];
-
-            const host = sector.host + ":" + sector.port;
-            if (req.headers.host != host) {
-                continue;
-            }
-
-            const modules : Array<MinuetServerModuleBase> = sector.modules;
-            for (let n2 = 0 ; n2 < modules.length ; n2++){
-                const module : MinuetServerModuleBase = modules[n2];
-
-                if (!module) continue;
-                
-                let status : boolean;
-                if (module.onListen){
-                    status = await module.onListen(req, res);
+            const sector : MinuetServerSector = sectors[sectorName];
+            for (let n2 = 0 ; n2 < sector.vhosts.length ; n2++) {
+                const vhost : MinuetServerSectorVhost = sector.vhosts[n2];
+                const host = vhost.host + ":" + vhost.port;
+                if (req.headers.host == host) {
+                    decisionSector = sector;
+                    break;
                 }
-                if (status) break;
             }
         }
-    }
 
+        if (!decisionSector) return;
+
+        const modules : Array<MinuetServerModuleBase> = decisionSector.modules;
+         for (let n2 = 0 ; n2 < modules.length ; n2++){
+            const module : MinuetServerModuleBase = modules[n2];
+
+            if (!module) continue;
+                
+            let status : boolean;
+            if (module.onListen){
+                status = await module.onListen(req, res);
+            }
+            if (status) break;
+        }
+    }
 }

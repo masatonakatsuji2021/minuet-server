@@ -48,26 +48,33 @@ class Listener extends minuet_load_balancer_1.LoadBalancerListner {
     }
     listen(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            let decisionSector;
             const sc = Object.keys(sectors);
             for (let n = 0; n < sc.length; n++) {
                 const sectorName = sc[n];
                 const sector = sectors[sectorName];
-                const host = sector.host + ":" + sector.port;
-                if (req.headers.host != host) {
-                    continue;
-                }
-                const modules = sector.modules;
-                for (let n2 = 0; n2 < modules.length; n2++) {
-                    const module = modules[n2];
-                    if (!module)
-                        continue;
-                    let status;
-                    if (module.onListen) {
-                        status = yield module.onListen(req, res);
-                    }
-                    if (status)
+                for (let n2 = 0; n2 < sector.vhosts.length; n2++) {
+                    const vhost = sector.vhosts[n2];
+                    const host = vhost.host + ":" + vhost.port;
+                    if (req.headers.host == host) {
+                        decisionSector = sector;
                         break;
+                    }
                 }
+            }
+            if (!decisionSector)
+                return;
+            const modules = decisionSector.modules;
+            for (let n2 = 0; n2 < modules.length; n2++) {
+                const module = modules[n2];
+                if (!module)
+                    continue;
+                let status;
+                if (module.onListen) {
+                    status = yield module.onListen(req, res);
+                }
+                if (status)
+                    break;
             }
         });
     }

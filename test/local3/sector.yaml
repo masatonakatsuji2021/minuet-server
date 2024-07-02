@@ -11,24 +11,35 @@ name: local3
 # Sector Enable
 enable: true
 
-#-----------------------------------------------
-# Sector Listen Type 
-# Selected pattern http, https, webSocket, webSocketSSL
-type: http
+vhosts: 
+  - name: public
 
-#-----------------------------------------------
-# Host Name (domain)
-host: localhost
+    # Sector Listen Type 
+    # Selected pattern http, https, webSocket, webSocketSSL
+    type: http
 
-#-----------------------------------------------
-# Port Number
-port: 4851
+    # Host Name (domain)
+    host: localhost
 
-#-----------------------------------------------
-# SSL Setting (Type = https only)
-# ssl:
-#  key:  ssl/server.key
-#  cert: ssl/server.crt
+    # Port Number
+    port: 4851
+
+    # SSL Setting (Type = https only)
+    # ssl:
+    #  key:  ssl/server.key
+    #  cert: ssl/server.crt
+
+  - name: admin
+
+    # Sector Listen Type 
+    # Selected pattern http, https, webSocket, webSocketSSL
+    type: http
+
+    # Host Name (domain)
+    host: localhost
+
+    # Port Number
+    port: 7251
 
 #-----------------------------------------------
 # modules

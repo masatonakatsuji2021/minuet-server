@@ -12,23 +12,23 @@ name: local2
 enable: true
 
 #-----------------------------------------------
-# Sector Listen Type 
-# Selected pattern http, https, webSocket, webSocketSSL
-type: http
+# Virtual Host Lists
+vhosts:
 
-#-----------------------------------------------
-# Host Name (domain)
-host: localhost
+    # Sector Listen Type 
+    # Selected pattern http, https, webSocket, webSocketSSL
+  - type: http
 
-#-----------------------------------------------
-# Port Number
-port: 2500
+    # Host Name (domain)
+    host: localhost
 
-#-----------------------------------------------
-# SSL Setting (Type = https only)
-# ssl:
-#  key:  ssl/server.key
-#  cert: ssl/server.crt
+    # Port Number
+    port: 2500
+
+    # SSL Setting (Type = https only)
+    # ssl:
+    #  key:  ssl/server.key
+    #  cert: ssl/server.crt
 
 #-----------------------------------------------
 # modules

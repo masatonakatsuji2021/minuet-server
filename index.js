@@ -33,7 +33,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MinuetServerModuleBase = exports.MinuetServer = exports.Core = void 0;
+exports.MinuetServerModuleBase = exports.MinuetServer = exports.MinuetServerListenType = exports.Core = void 0;
 const os = require("os");
 const fs = require("fs");
 const yaml = require("js-yaml");
@@ -126,32 +126,40 @@ class Core {
             if (sectorInit.enable == undefined) {
                 sectorInit.enable = true;
             }
-            let protocol;
-            let url;
-            let defaultPort;
-            if (sectorInit.type == MinuetServerListenType.http) {
-                protocol = "http://";
-                defaultPort = 80;
+            if (!sectorInit.vhosts)
+                continue;
+            for (let n2 = 0; n2 < sectorInit.vhosts.length; n2++) {
+                const vhost = sectorInit.vhosts[n2];
+                let protocol;
+                let url;
+                let defaultPort;
+                if (vhost.type == MinuetServerListenType.http) {
+                    protocol = "http://";
+                    defaultPort = 80;
+                }
+                else if (vhost.type == MinuetServerListenType.https) {
+                    protocol = "https://";
+                    defaultPort = 443;
+                }
+                else if (vhost.type == MinuetServerListenType.webSocket) {
+                    protocol = "ws://";
+                    defaultPort = 80;
+                }
+                else if (vhost.type == MinuetServerListenType.webSocketSSL) {
+                    protocol = "wss://";
+                    defaultPort = 443;
+                }
+                if (vhost.port == undefined) {
+                    vhost.port = defaultPort;
+                }
+                url = protocol + vhost.host;
+                if (vhost.port != defaultPort) {
+                    url += ":" + vhost.port;
+                }
+                vhost.url = url;
+                sectorInit.vhosts[n2] = vhost;
             }
-            else if (sectorInit.type == MinuetServerListenType.https) {
-                protocol = "https://";
-                defaultPort = 443;
-            }
-            else if (sectorInit.type == MinuetServerListenType.webSocket) {
-                protocol = "ws://";
-                defaultPort = 80;
-            }
-            else if (sectorInit.type == MinuetServerListenType.webSocketSSL) {
-                protocol = "wss://";
-                defaultPort = 443;
-            }
-            if (sectorInit.port == undefined) {
-                sectorInit.port = defaultPort;
-            }
-            url = protocol + sectorInit.host;
-            if (sectorInit.port != defaultPort) {
-                url += ":" + sectorInit.port;
-            }
+            // load modules 
             let moduleInits = [];
             if (sectorInit.modules) {
                 for (let n2 = 0; n2 < sectorInit.modules.length; n2++) {
@@ -174,12 +182,9 @@ class Core {
                 name: sectorName,
                 root: sectorPath,
                 enable: sectorInit.enable,
-                type: sectorInit.type,
-                host: sectorInit.host,
-                port: sectorInit.port,
+                vhosts: sectorInit.vhosts,
                 moduleInit: moduleInits,
                 modules: [],
-                url: url,
             };
             if (sector.moduleInit) {
                 for (let n2 = 0; n2 < sector.moduleInit.length; n2++) {
@@ -204,36 +209,41 @@ class Core {
         for (let n = 0; n < sc.length; n++) {
             const name = sc[n];
             const sector = sectors[name];
-            if (sector.type == MinuetServerListenType.http) {
-                if (usePorts.http.indexOf(sector.port) > -1) {
-                    continue;
+            if (!sector.vhosts)
+                continue;
+            for (let n2 = 0; n2 < sector.vhosts.length; n2++) {
+                const vhost = sector.vhosts[n2];
+                if (vhost.type == MinuetServerListenType.http) {
+                    if (usePorts.http.indexOf(vhost.port) > -1) {
+                        continue;
+                    }
+                    usePorts.http.push(vhost.port);
+                    res.push({
+                        type: minuet_load_balancer_1.LoadBalancerServerType.http,
+                        port: vhost.port,
+                    });
                 }
-                usePorts.http.push(sector.port);
-                res.push({
-                    type: minuet_load_balancer_1.LoadBalancerServerType.http,
-                    port: sector.port,
-                });
-            }
-            else if (sector.type == MinuetServerListenType.https) {
-                res.push({
-                    type: minuet_load_balancer_1.LoadBalancerServerType.https,
-                    port: sector.port,
-                });
-            }
-            else if (sector.type == MinuetServerListenType.webSocket) {
-                if (usePorts.webSocket.indexOf(sector.port) > -1) {
-                    continue;
+                else if (vhost.type == MinuetServerListenType.https) {
+                    res.push({
+                        type: minuet_load_balancer_1.LoadBalancerServerType.https,
+                        port: vhost.port,
+                    });
                 }
-                res.push({
-                    type: minuet_load_balancer_1.LoadBalancerServerType.webSocket,
-                    port: sector.port,
-                });
-            }
-            else if (sector.type == MinuetServerListenType.webSocketSSL) {
-                res.push({
-                    type: minuet_load_balancer_1.LoadBalancerServerType.webSocketSSL,
-                    port: sector.port,
-                });
+                else if (vhost.type == MinuetServerListenType.webSocket) {
+                    if (usePorts.webSocket.indexOf(vhost.port) > -1) {
+                        continue;
+                    }
+                    res.push({
+                        type: minuet_load_balancer_1.LoadBalancerServerType.webSocket,
+                        port: vhost.port,
+                    });
+                }
+                else if (vhost.type == MinuetServerListenType.webSocketSSL) {
+                    res.push({
+                        type: minuet_load_balancer_1.LoadBalancerServerType.webSocketSSL,
+                        port: vhost.port,
+                    });
+                }
             }
         }
         return res;
@@ -309,16 +319,21 @@ class Core {
         for (let n = 0; n < sc.length; n++) {
             const name = sc[n];
             const sector = sectors[name];
-            let ssl = false;
-            if (sector.ssl)
-                ssl = true;
-            const td = (" " + sector.name).padEnd(10) + " | " + sector.type.padEnd(10) + " | " + sector.url.padEnd(40) + " | " + ssl.toString().padEnd(8) + " | " + sector.enable.toString().padEnd(10);
-            out += td + "\n";
-            let line = "";
-            for (let n2 = 0; n2 < td.length; n2++) {
-                line += "-";
+            if (!sector.vhosts)
+                continue;
+            for (let n2 = 0; n2 < sector.vhosts.length; n2++) {
+                const vhost = sector.vhosts[n2];
+                let ssl = false;
+                if (vhost.ssl)
+                    ssl = true;
+                const td = (" " + sector.name).padEnd(10) + " | " + vhost.type.padEnd(10) + " | " + vhost.url.padEnd(40) + " | " + ssl.toString().padEnd(8) + " | " + sector.enable.toString().padEnd(10);
+                out += td + "\n";
+                let line = "";
+                for (let n2 = 0; n2 < td.length; n2++) {
+                    line += "-";
+                }
+                out += line + "\n";
             }
-            out += line + "\n";
         }
         console.log(out);
     }
@@ -371,7 +386,7 @@ var MinuetServerListenType;
     MinuetServerListenType["https"] = "https";
     MinuetServerListenType["webSocket"] = "webSocket";
     MinuetServerListenType["webSocketSSL"] = "webSocketSSL";
-})(MinuetServerListenType || (MinuetServerListenType = {}));
+})(MinuetServerListenType || (exports.MinuetServerListenType = MinuetServerListenType = {}));
 class MinuetServer {
     constructor(options) {
         if (options) {

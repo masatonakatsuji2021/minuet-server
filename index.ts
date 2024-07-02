@@ -139,34 +139,44 @@ export class Core {
                 sectorInit.enable = true;
             }
 
-            let protocol;
-            let url;
-            let defaultPort;
-            if (sectorInit.type == MinuetServerListenType.http){
-                protocol = "http://";
-                defaultPort = 80;
-            }
-            else if (sectorInit.type == MinuetServerListenType.https){
-                protocol = "https://";
-                defaultPort = 443;
-            }
-            else if (sectorInit.type == MinuetServerListenType.webSocket){
-                protocol = "ws://";
-                defaultPort = 80;
-            }
-            else if (sectorInit.type == MinuetServerListenType.webSocketSSL){
-                protocol = "wss://";
-                defaultPort = 443;
+            if (!sectorInit.vhosts) continue;
+
+            for (let n2 = 0 ; n2 < sectorInit.vhosts.length ; n2++) {
+                const vhost : MinuetServerSectorVhost = sectorInit.vhosts[n2];
+
+                let protocol;
+                let url;
+                let defaultPort;
+                if (vhost.type == MinuetServerListenType.http){
+                    protocol = "http://";
+                    defaultPort = 80;
+                }
+                else if (vhost.type == MinuetServerListenType.https){
+                    protocol = "https://";
+                    defaultPort = 443;
+                }
+                else if (vhost.type == MinuetServerListenType.webSocket){
+                    protocol = "ws://";
+                    defaultPort = 80;
+                }
+                else if (vhost.type == MinuetServerListenType.webSocketSSL){
+                    protocol = "wss://";
+                    defaultPort = 443;
+                }
+    
+                if (vhost.port == undefined){
+                    vhost.port = defaultPort;
+                }
+                url = protocol + vhost.host;
+                if (vhost.port != defaultPort){
+                    url += ":" + vhost.port;
+                }
+
+                vhost.url = url;
+                sectorInit.vhosts[n2] = vhost;
             }
 
-            if (sectorInit.port == undefined){
-                sectorInit.port = defaultPort;
-            }
-            url = protocol + sectorInit.host;
-            if (sectorInit.port != defaultPort){
-                url += ":" + sectorInit.port;
-            }
-
+            // load modules 
             let moduleInits = [];
             if (sectorInit.modules){
                 for (let n2 = 0 ; n2 < sectorInit.modules.length ; n2++){
@@ -192,12 +202,9 @@ export class Core {
                 name: sectorName,
                 root: sectorPath,
                 enable: sectorInit.enable,
-                type: sectorInit.type,
-                host: sectorInit.host,
-                port: sectorInit.port,
+                vhosts: sectorInit.vhosts,
                 moduleInit: moduleInits,
                 modules: [],
-                url: url,
             };
 
             if (sector.moduleInit){
@@ -225,36 +232,42 @@ export class Core {
             const name = sc[n];
             const sector = sectors[name];
 
-            if (sector.type == MinuetServerListenType.http) {
-                if (usePorts.http.indexOf(sector.port) > -1){
-                    continue;
-                }                
-                usePorts.http.push(sector.port);
-                res.push({
-                    type: LoadBalancerServerType.http,
-                    port: sector.port,
-                });
-            }
-            else if (sector.type == MinuetServerListenType.https) {
-                res.push({
-                    type: LoadBalancerServerType.https,
-                    port: sector.port,
-                });
-            }
-            else if (sector.type == MinuetServerListenType.webSocket) {
-                if (usePorts.webSocket.indexOf(sector.port) >-1){
-                    continue;
+            if (!sector.vhosts) continue;
+
+            for (let n2 = 0 ; n2 < sector.vhosts.length ; n2++) {
+                const vhost : MinuetServerSectorVhost = sector.vhosts[n2];
+
+                if (vhost.type == MinuetServerListenType.http) {
+                    if (usePorts.http.indexOf(vhost.port) > -1){
+                        continue;
+                    }                
+                    usePorts.http.push(vhost.port);
+                    res.push({
+                        type: LoadBalancerServerType.http,
+                        port: vhost.port,
+                    });
                 }
-                res.push({
-                    type: LoadBalancerServerType.webSocket,
-                    port: sector.port,
-                });
-            }
-            else if (sector.type == MinuetServerListenType.webSocketSSL) {
-                res.push({
-                    type: LoadBalancerServerType.webSocketSSL,
-                    port: sector.port,
-                });
+                else if (vhost.type == MinuetServerListenType.https) {
+                    res.push({
+                        type: LoadBalancerServerType.https,
+                        port: vhost.port,
+                    });
+                }
+                else if (vhost.type == MinuetServerListenType.webSocket) {
+                    if (usePorts.webSocket.indexOf(vhost.port) >-1){
+                        continue;
+                    }
+                    res.push({
+                        type: LoadBalancerServerType.webSocket,
+                        port: vhost.port,
+                    });
+                }
+                else if (vhost.type == MinuetServerListenType.webSocketSSL) {
+                    res.push({
+                        type: LoadBalancerServerType.webSocketSSL,
+                        port: vhost.port,
+                    });
+                }
             }
         }
         return res;
@@ -339,15 +352,20 @@ export class Core {
         for (let n = 0 ; n < sc.length ; n++) {
             const name = sc[n];
             const sector = sectors[name];
-            let ssl = false;
-            if (sector.ssl) ssl = true;
-            const td = (" " + sector.name).padEnd(10) + " | " + sector.type.padEnd(10) + " | "+ sector.url.padEnd(40) + " | " + ssl.toString().padEnd(8) + " | " + sector.enable.toString().padEnd(10);
-            out += td + "\n";
-            let line = "";
-            for (let n2 = 0 ; n2 < td.length ; n2++){
-                line += "-";
+            if (!sector.vhosts) continue;
+            for (let n2 = 0 ; n2 < sector.vhosts.length ;n2++) {
+                const vhost : MinuetServerSectorVhost = sector.vhosts[n2];
+
+                let ssl = false;
+                if (vhost.ssl) ssl = true;
+                const td = (" " + sector.name).padEnd(10) + " | " + vhost.type.padEnd(10) + " | "+ vhost.url.padEnd(40) + " | " + ssl.toString().padEnd(8) + " | " + sector.enable.toString().padEnd(10);
+                out += td + "\n";
+                let line = "";
+                for (let n2 = 0 ; n2 < td.length ; n2++){
+                    line += "-";
+                }
+                out += line + "\n";
             }
-            out += line + "\n";
         }
 
         console.log(out);
@@ -397,33 +415,39 @@ export class Core {
     }
 }
 
-interface MineutServerInit {
+export interface MineutServerInit {
     processTitle : string,
     loadBalancer: LoadBalancerOption,
     sectorPaths: MineutServerInitSectorPaths,
 }
 
-interface MineutServerInitSectorPaths {
+export interface MineutServerInitSectorPaths {
     [key: string] : string,
 }
 
-interface MinuetServerSectorInit {
+export interface MinuetServerSectorInit {
     name: string,
     enable: boolean,
+    vhosts: Array<MinuetServerSectorVhost>,
+    modules?: Array<string>,
+}
+
+export interface MinuetServerSectorVhost {
+    url? : string,
+    name? : string,
     type?: MinuetServerListenType,
     host: string,
     port?: number,
     ssl?: MinuetServerSectorInitSSL,
-    modules?: Array<string>,
 }
 
-interface MinuetServerSectorInitSSL {
+export interface MinuetServerSectorInitSSL {
     key: string,
     cert: string,
     ca: Array<string>,
 }
 
-interface MinuetServerSectors {
+export interface MinuetServerSectors {
     [x: string] : MinuetServerSector,
 }
 
@@ -431,16 +455,12 @@ export interface MinuetServerSector {
     name: string,
     root: string,
     enable: boolean,
-    type?: MinuetServerListenType,
-    host: string,
-    port?: number,
-    ssl?: MinuetServerSectorInitSSL,
+    vhosts: Array<MinuetServerSectorVhost>,
     moduleInit: Array<any>,
     modules: Array<MinuetServerModuleBase>,
-    url: string,
 }
 
-enum MinuetServerListenType {
+export enum MinuetServerListenType {
     http = "http",
     https = "https",
     webSocket = "webSocket",
