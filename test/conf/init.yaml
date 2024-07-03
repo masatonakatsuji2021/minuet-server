@@ -9,7 +9,7 @@ loadBalancer:
   type: RoundRobin
   maps:
     - mode: WorkerThreads
-      clone: 3
+      clone: 1
 
 # Sector Paths
 sectorPaths:  
