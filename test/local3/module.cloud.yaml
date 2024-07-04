@@ -13,5 +13,5 @@ containers:
     /admin/sample_1: container=sample_1, type=admin
 
 routeConverts:
-  /admin: http://localhost:4851
-  /sample_1: http://localhost:7251
+  /public: http://localhost:4851
+  /admin: http://localhost:7251
