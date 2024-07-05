@@ -33,6 +33,7 @@
     "minuet-server-accessor": "git+https://github.com/masatonakatsuji2021/minuet-server-accessor.git",
     "minuet-server-logger": "git+https://github.com/masatonakatsuji2021/minuet-server-logger.git",
     "minuet-server-web": "git+https://github.com/masatonakatsuji2021/minuet-server-web.git",
+    "minuet-server-authoricate": "git+https://github.com/masatonakatsuji2021/minuet-server-authoricate.git",
     "minuet-server-cloud": "git+https://github.com/masatonakatsuji2021/minuet-server-cloud.git"
   }
 }

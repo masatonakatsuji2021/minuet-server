@@ -15,3 +15,8 @@ containers:
 routeConverts:
   /public: http://localhost:4851
   /admin: http://localhost:7251
+
+authoricates:
+  /:
+    user: test
+    pass: 12345
